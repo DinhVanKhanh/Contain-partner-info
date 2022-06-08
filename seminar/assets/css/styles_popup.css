@@ -1,0 +1,182 @@
+@charset "UTF-8";
+
+/*==========================================================================*/
+/*//////////////////////////////////////////////////////////////////////////*/
+/*//////                                                              //////*/
+/*//////  Copyright (C) 2009 株式会社フリーセル All Rights Reserved.  //////*/
+/*//////                                                              //////*/
+/*//////////////////////////////////////////////////////////////////////////*/
+/*                                                                          */
+/*    base.css  --> スタイルの初期設定を行うため、変更しないで下さい。      */
+/*    fonts.css --> フォントの初期設定を行うため、変更しないで下さい。      *
+/*                                                                          */
+/*==========================================================================*/
+
+/*==========================================================================*/
+/*                           Common-Setting                                 */
+/*==========================================================================*/
+
+/* 基本タグのフォントサイズを指定（12px -> 120% or 1.2em ） */
+
+h1,h2,h3,h4,h5,h6,input,button,textarea,select,p,blockquote,th,td,pre,address,li,dt,dd {
+	font-size: 95%;
+}
+a {
+	color: #2ba3a3;
+	outline:none;
+	text-decoration:underline;
+}
+a:hover, a:active {
+	color: #BC9845;
+	text-decoration: none;
+}
+
+p, dt, dd, td, li {
+	line-height: 1.7em;
+}
+p {
+	line-height: 1.7em;
+	padding: 0 0 16px;
+}
+.section {
+	padding: 0 0px 15px 0px;
+}
+.section .section {
+	padding: 0 0 10px;
+}
+.image_c,
+.boxImg { padding-bottom: 23px }
+.image_l { float: left; padding: 0 23px 0 0; }
+.image_r { float: right; padding: 0 0 0 23px; }
+.boxImg p:last-child { padding-bottom: 0 }
+.image_r img,
+.image_l img {
+	padding: 3px 0 5px;
+}
+.image_c {text-align: center}
+
+.hover:hover {
+	opacity: 0.8;
+	filter: alpha(opacity = 80);
+}
+#main_pop{
+	padding: 5%!important;
+	text-align: center;
+}
+.popup{
+	width: 96%;
+	margin: 0 auto;
+}
+table {
+	border: 1px solid #9696;
+	border-collapse: collapse;
+	font-size: 100%;
+}
+td, th{
+	border: 1px solid #9696;
+	padding:1%;	
+	vertical-align: middle;
+}
+.float_left{
+	float: left;
+}
+.center{
+	text-align: center;
+}
+.float_right{
+	float: right;
+}
+.w10{
+	width: 10%;
+}
+.w12{
+	width: 12%;
+}
+.w15{
+	width: 15%;
+}
+.w20{
+	width: 20%;
+}
+.clear{
+	clear: both;
+}
+.mar_l20{
+	margin-left: 17%;
+}
+.mar_r8{
+	margin-right: 8%;
+}
+.mar_r20{
+	margin-right: 20%!important;
+}
+p{
+	line-height: 1.7em;
+	padding: 0;
+	font-size: 100%;
+	margin-bottom: 0!important;
+}
+.showclient th{
+	background-color: #d7f5c0; 
+	font-weight: bold;
+	text-align: center;	
+}
+.text_title{
+	background-color: #265a00; 
+	font-size: 150%; 
+	font-weight: bold; 
+	color: #fff; 
+	margin-bottom:0px; 
+	padding-top:!important;
+	text-align: center;
+}
+input {
+    /*background: rgba(0, 0, 0, 0) -moz-linear-gradient(center top , #fff 30%, #efefef 70%) repeat scroll 0 0;*/
+    border: 1px solid #ccc;    
+    height: 25px;
+    padding: 1px;
+    vertical-align: middle;
+}
+.bg_red{
+	background-color: #ff0000; 
+	color:#fff; 
+	padding:0px; 
+	font-size: 85%!important;
+	
+	padding: 0!important;
+}
+ul{
+	margin-left:0;
+}
+li{
+	list-style-type: none;
+	float: left;
+	padding-right: 3%;
+	
+}
+.btnStyle1 {
+    /*background-image: linear-gradient(to bottom, #fff, #ccc);*/
+    border: 1px solid #ccc;
+    box-shadow: 1px 1px rgba(1, 20, 30, 0.3);
+    color: #444!important;
+    padding: 0px !important;
+}
+.bg_th{
+	background-color:#fff8e8!important;
+	width: 18%;
+	text-align: center;
+}
+.mar_l2{
+	margin-left: 4%;
+}
+.mar_l13{
+	margin-left: 11.2%;
+}
+.border_right{
+	border-right: none!important;
+	vertical-align: top;
+	padding-left: 4%!important;
+}
+
+
+
