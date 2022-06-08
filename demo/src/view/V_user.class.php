@@ -1,6 +1,5 @@
 <?php
     class V_user {
-		public $role = ['admin', 'user'];
         public function loadList( Array $data ) : array {
             if ( $data == false ) {
                 $result["view"] = '<table id="tblResult_u" class="show_ban"><tr><td style="text-align:center">空のデータ</td></tr></table>';
@@ -12,7 +11,6 @@
 							<th class="w5">No.</th>
 							<th class="w14">ユーザーID</th>
 							<th>ユーザー名</th>
-							<th>権限</th>
 							<th class="w_td_btn">操作</th>
 						</tr>';
 
@@ -23,7 +21,6 @@
 								<td class="center areaIndex">' . $i . '</td>
 								<td class="center areaCode">' . $value['UserCd'] . '</td>
 								<td class="areaName">' . $value['UserName'] . '</td>
-								<td class="center">' . $this->role[(int) $value['KengenKbn']] . '</td>
 								<td class="center areaBtn padd_10 ">';
 
 				if ($count > 1) {
@@ -44,6 +41,6 @@
 
             Result:
             return $result;
-		}
+        }
     }
 ?>

@@ -31,23 +31,14 @@
 		public function add( Array $data ) : array  {
             try {
                 $rs["success"] = false;
-
-                // Check record exists
-                if ( $this->dataExists($data) ) {
-                    throw new Exception( "本スケジュールは既に存在しています。" );
-                }
-
-                extract($data);
-
-                if ( file_exists( $file["tmp_name"] ) ) {
-                    if ( $file['error'] == 0 ) {
+                if ( file_exists( $data["file"]["tmp_name"] ) ) {
+                    if ( $data["file"]['error'] == 0 ) {
                         $upload = __DIR__ . '/../../../data_files/';
 
-                        if ( !empty( $curPdf ) && !empty( $file["name"] ) ) {
-                            $file_ext = mb_substr( $curPdf, mb_strrpos( $curPdf, "." ) + 1 );
-                            $file_ext = strtolower($file_ext);
+                        if ( !empty( $data["curPdf"] ) && empty( $data["file"]["name"] ) ) {
+                            $file_ext = substr( $data["curPdf"], strrpos( $data["curPdf"], "." ) );
 
-                            if ( $file_ext != 'pdf' ) {
+                            if ( strcasecmp( $file_ext, "pdf" ) != 0 ) {
                                 throw new Exception( "PDFファイルが有効ではない。" );
                             }
                             elseif ( !file_exists( $upload . $curPdf ) ) {
@@ -55,39 +46,44 @@
                             }
                         }
 
-                        $inputFileName = $file["name"];
+                        $inputFileName = $data["file"]["name"];
                         $dirFile = $upload . $this->_prefix . $inputFileName;
 
                         if ( file_exists( $dirFile ) ) {
                             unlink( $dirFile );
                         }
-
-                        if ( !move_uploaded_file( $file["tmp_name"], $dirFile ) ) {
-                            throw new Exception( 'ファイルのアップロード時にエラーが発生しました' );
-                        }
+                        move_uploaded_file( $data["file"]["tmp_name"], $dirFile );
                     }
                     else {
                         throw new Exception( "PDFファイルのアップロードのエラーであります。" );
                     }
                 }
 
-                $query = "INSERT INTO {$this->table}( `ShopId`, `MeetingPlaceId`, `Date`, `TimeFrom`, `TimeTo`, `Description`, `IsActive`, `IsHighlight`, `Pdf` )" .
-                        " VALUES ( :ShopId, :MeetingPlaceId, :Date, :TimeFrom, :TimeTo, :Description, :IsActive, :IsHighlight, :Pdf )";
-
-                $Pdf = !empty( $data["file"] ) ? $curPdf : null;
-                $Date = date( 'Y-m-d', strtotime( $Date ) );
-
+                // Check record exists
+                $query = "SELECT ScheduleId FROM {$this->table} WHERE MeetingPlaceId = " . $data['meetingPlaceId'] .
+                                            " AND ShopId = " . $data['shopId'] .
+                                            " AND `Date` = '" . date( 'Y-m-d', strtotime( trim( $data['scDate'] ) ) ) . "'" .
+                                            " AND (TimeFrom = '" . trim( $data['scFTime'] ) . "'" .
+                                            " AND TimeTo = '" . trim( $data['scTTime'] ) . "')";
                 $stmt = $this->conn->prepare( $query );
-                $stmt->bindParam(':ShopId', $ShopId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':MeetingPlaceId', $MeetingPlaceId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Date', $Date, PDO::PARAM_STR);
-                $stmt->bindParam(':TimeFrom', $TimeFrom, PDO::PARAM_STR, 5);
-                $stmt->bindParam(':TimeTo', $TimeTo, PDO::PARAM_STR, 5);
-                $stmt->bindParam(':Description', $Description, PDO::PARAM_STR, 500);
-                $stmt->bindParam(':IsActive', $IsActive, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':IsHighlight', $IsHighlight, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':Pdf', $Pdf, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
                 $stmt->execute();
+                if ( $stmt->rowCount() > 0 ) {
+                    throw new Exception( "本スケジュールは既に存在しています。" );
+                }
+
+                $query = "INSERT INTO {$this->table}( `ShopId`, `MeetingPlaceId`, `Date`, `TimeFrom`, `TimeTo`, `Description`, `IsActive`, `IsHighlight`, `Pdf` )" .
+                        " VALUES (" .
+                            $data["shopId"] . ',' .
+                            $data["meetingPlaceId"] . ',' .
+                            "'" . date( "Y-m-d", strtotime( $data["scDate"] ) ) . "'," .
+                            "'" . $data["scFTime"] . "'," .
+                            "'" . $data["scTTime"] . "'," .
+                            "'" . $data["scDescript"] . "'," .
+                            $data["isActive"] . ',' .
+                            $data["isHighLight"] . ',' .
+                            "'" . ( $data["file"] != null ? $data["curPdf"] : "" ) . "'"
+                        . ")";
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
@@ -106,23 +102,14 @@
 		public function edit( Array $data ) : array {
             try {
                 $rs["success"] = false;
-
-                // Check record exists
-                if ( $this->dataExists($data, self::FLAG_EDIT) ) {
-                    throw new Exception( "本スケジュールは既に存在しています。" );
-                }
-
-                extract($data);
-
-                if ( file_exists( $file["tmp_name"] ) ) {
-                    if ( $file['error'] == 0 ) {
+                if ( file_exists( $data["file"]["tmp_name"] ) ) {
+                    if ( $data["file"]['error'] == 0 ) {
                         $upload = __DIR__ . '/../../../data_files/';
 
-                        if ( !empty( $curPdf ) && empty( $file["name"] ) ) {
-                            $file_ext = mb_substr( $curPdf, mb_strrpos( $curPdf, "." ) );
-                            $file_ext = strtolower($file_ext);
+                        if ( !empty( $data["curPdf"] ) && empty( $data["file"]["name"] ) ) {
+                            $file_ext = substr( $data["curPdf"], strrpos( $data["curPdf"], "." ) );
 
-                            if ( $file_ext != "pdf" ) {
+                            if ( strcasecmp( $file_ext, "pdf" ) != 0 ) {
                                 throw new Exception(  "PDFファイルが有効ではない。" );
                             }
                             elseif ( !file_exists( $upload . $curPdf ) ) {
@@ -130,58 +117,56 @@
                             }
                         }
 
-                        $inputFileName = $file["name"];
+                        $inputFileName = $data["file"]["name"];
                         $dirFile = $upload . $this->_prefix . $inputFileName;
 
                         if ( file_exists( $dirFile ) ) {
                             unlink( $dirFile );
                         }
 
-                        if ( empty( $curPdf ) && !empty( $oldPdf ) ) {
+                        if ( empty( $data["curPdf"] ) && !empty( $data["oldPdf"] ) ) {
                             $stmt = $this->conn->prepare( $Conn, "SELECT ShopId FROM {$this->table} WHERE `Pdf`='" . $oldPdf . "'" );
                             $stmt->execute();
                             if ( $stmt->rowCount() > 0 ) {
                                 unlink( $upload . $this->_prefix . $oldPdf );
                             }
                         }
-                        move_uploaded_file( $file["tmp_name"], $dirFile );
+                        move_uploaded_file( $data["file"]["tmp_name"], $dirFile );
                     }
                     else {
                         throw new Exception( "PDFファイルのアップロードのエラーであります。" );
                     }
                 }
 
-                $query = "UPDATE {$this->table} SET " .
-                            "`ShopId` = :ShopId" .
-                            ",`MeetingPlaceId` = :MeetingPlaceId" .
-                            ",`Date` = :Date" .
-                            ",`TimeFrom` = :TimeFrom" .
-                            ",`TimeTo` = :TimeTo" .
-                            ",`Description` = :Description" .
-                            ",`IsActive` = :IsActive" .
-                            ",`IsHighlight` = :IsHighlight" .
-                            ",`Pdf` = :Pdf" .
-                            " WHERE `ScheduleId` = :ScheduleId";
-                $Pdf = !empty( $data["file"] ) ? $curPdf : null;
-                $Date = date( 'Y-m-d', strtotime( $Date ) );
-
+                // Check record exists
+                $query = "SELECT ScheduleId FROM {$this->table} WHERE MeetingPlaceId = " . $data['meetingPlaceId'] .
+                        " AND ShopId = " . $data['shopId'] .
+                        " AND `Date` = '" . date( 'Y-m-d', strtotime( $data['scDate'] ) ) . "'" .
+                        " AND (TimeFrom = '" . $data['scFTime'] . "'" .
+                        " AND TimeTo = '" . $data['scTTime'] . "')" .
+                        " AND ScheduleId <> " . $data['id'];
                 $stmt = $this->conn->prepare( $query );
-                $stmt->bindParam(':ScheduleId', $ScheduleId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':ShopId', $ShopId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':MeetingPlaceId', $MeetingPlaceId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Date', $Date, PDO::PARAM_STR);
-                $stmt->bindParam(':TimeFrom', $TimeFrom, PDO::PARAM_STR, 5);
-                $stmt->bindParam(':TimeTo', $TimeTo, PDO::PARAM_STR, 5);
-                $stmt->bindParam(':Description', $Description, PDO::PARAM_STR, 500);
-                $stmt->bindParam(':IsActive', $IsActive, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':IsHighlight', $IsHighlight, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':Pdf', $Pdf, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
                 $stmt->execute();
-                
+                if ( $stmt->rowCount() > 0 ) {
+                    throw new Exception( "本スケジュールは既に存在しています。" );
+                }
+
+                $query = "UPDATE {$this->table} SET " .
+                        "`ShopId` = " . $data["shopId"] . "," .
+                        "`MeetingPlaceId` = " . $data["meetingPlaceId"] . "," .
+                        "`Date` = '" . date( "Y-m-d", strtotime( $data["scDate"] ) ) . "'," .
+                        "`TimeFrom` = '" . $data["scFTime"] . "'," .
+                        "`TimeTo` = '" . $data["scTTime"] . "'," .
+                        "`Description` = '" . $data["scDescript"] . "'," .
+                        "`isActive` = " . $data["isActive"] . "," .
+                        "`isHighLight` = " . $data["isHighLight"] . "," .
+                        "`Pdf` = '" . $data["curPdf"] . "'"  .
+                        " WHERE `scheduleId` = " . $data["id"];
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
-                $rs['errMsg'] = '更新失敗' . $e->getMessage();
+                $rs['errMsg'] = '更新失敗';
                 goto Result;
             }
             catch (Exception $e) {
@@ -195,25 +180,25 @@
 
 		public function delete( $idList ) : string {
             try {
-                $query = "SELECT Pdf, COUNT( Pdf )\n
-                        FROM {$this->table}\n
-                        WHERE ScheduleId IN ({$idList}) AND (Pdf IS NOT NULL AND Pdf <> '')\n
-                        GROUP BY Pdf\n
-                        HAVING COUNT(Pdf) = 1";
+              $query = "SELECT Pdf, COUNT( Pdf )\n
+                      FROM {$this->table}\n
+                      WHERE ScheduleId IN ({$idList}) AND (Pdf IS NOT NULL AND Pdf <> '')\n
+                      GROUP BY Pdf\n
+                      HAVING COUNT(Pdf) = 1";
 
-                $stmt = $this->conn->prepare( $query );
-                $stmt->execute();
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if ( $stmt->rowCount() > 0 ) {
-                    foreach ( $result as $value ) {
-                        $upload = __DIR__ . '/../../../data_files/' . $this->_prefix . $value["Pdf"];
-                        if ( file_exists( $upload ) ) {
-                            unlink( $upload );
-                        }
-                    }
-                }
-                $this->conn->exec( "DELETE FROM {$this->table} WHERE ScheduleId IN ({$idList})" );
-                return "削除しました";
+              $stmt = $this->conn->prepare( $query );
+              $stmt->execute();
+              $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+              if ( $stmt->rowCount() > 0 ) {
+                  foreach ( $result as $value ) {
+                      $upload = __DIR__ . '/../../../data_files/' . $this->_prefix . $value["Pdf"];
+                      if ( file_exists( $upload ) ) {
+                          unlink( $upload );
+                      }
+                  }
+              }
+              $this->conn->exec( "DELETE FROM {$this->table} WHERE ScheduleId IN ({$idList})" );
+              return "削除しました";
             }
             catch (PDOException $e) {
               return "削除失敗";
@@ -263,7 +248,7 @@
                     // Meeting place code
                     $mtCode = $sheet->getCell('A' . $row)->getFormattedValue();
                     if ( $checkEmpty( $mtCode ) ) {
-                        $errMsg .= "会場は未入力です。";
+			                  $errMsg .= "会場は未入力です。";
                     }
                     else {
                         $stmt = $this->conn->prepare( "SELECT MeetingPlaceId FROM infodemo_meetingplaces WHERE UPPER(Code) = '" . strtoupper( trim( $mtCode ) ) . "'" );
@@ -272,47 +257,47 @@
                             $errMsg .= $mtCode . " 会場が存在しません。";
                         }
                         else {
-                            $data['MeetingPlaceId'] = (int) $stmt->fetch(PDO::FETCH_ASSOC)['MeetingPlaceId'];
+                            $data['meetingPlaceId'] = $stmt->fetch(PDO::FETCH_ASSOC)['MeetingPlaceId'];
                         }
                     }
 
                     // Shop code
                     $shopCode = $sheet->getCell('B' . $row)->getFormattedValue();
                     if ( $checkEmpty( $shopCode ) ) {
-                        $errMsg .= "販売店は未入力です。";
+			                  $errMsg .= "販売店は未入力です。";
                     }
                     else {
-                        $stmt = $this->conn->prepare( "SELECT ShopId FROM infodemo_shops WHERE UPPER(Code) = '" . strtoupper( trim( $shopCode ) ) . "'" );
+                        $stmt = $this->conn->prepare( "SELECT shopId FROM infodemo_shops WHERE UPPER(Code) = '" . strtoupper( trim( $shopCode ) ) . "'" );
                         $stmt->execute();
                         if ( $stmt->rowCount() < 1 ) {
                             $errMsg .= $shopCode . " 販売店が存在しません。";
                         }
                         else {
-                            $data['ShopId'] = (int) $stmt->fetch(PDO::FETCH_ASSOC)['ShopId'];
+                            $data['shopId'] = $stmt->fetch(PDO::FETCH_ASSOC)['shopId'];
                         }
                     }
 
                     // Date
-                    $data['Date'] = $sheet->getCell('C' . $row)->getFormattedValue();
-                    if ( $checkEmpty( $data["Date"] ) || strtotime( $data["Date"] ) == false ) {
-                        $errMsg .= "開催日程は未入力です。";
+                    $data['scDate'] = $sheet->getCell('C' . $row)->getFormattedValue();
+                    if ( $checkEmpty( $data["scDate"] ) || strtotime( $data["scDate"] ) == false ) {
+			                  $errMsg .= "開催日程は未入力です。";
                     }
                     else {
-                        $data['Date'] = date( 'Y-m-d', strtotime( $data['Date'] ) );
+                        $data['scDate'] = date( 'Y-m-d', strtotime( $data['scDate'] ) );
                     }
 
                     // TimeFrom
                     $timeFrom = $sheet->getCell('D' . $row)->getFormattedValue();
-                    $data["TimeFrom"] = preg_replace('/\s/', '', $timeFrom);
-                    $data["TimeFrom"] = preg_replace('/\：/', ':', $data['TimeFrom']);
-                    if ( $checkEmpty( $data["TimeFrom"] ) ) {
+                    $data["scFTime"] = preg_replace('/\s/', '', $timeFrom);
+	                  $data["scFTime"] = preg_replace('/\：/', ':', $data['scFTime']);
+                    if ( $checkEmpty( $data["scFTime"] ) ) {
                         $errMsg .= "開始時間は未入力です。";
                     }
-                    elseif ( !preg_match( '/^\d{1,2}\:\d{1,2}$/', $data['TimeFrom'] ) ) {
+                    elseif ( !preg_match( '/^\d{1,2}\:\d{1,2}$/', $data['scFTime'] ) ) {
                         $errMsg .= "開始時間が有効ではない。";
                     }
                     else {
-                        list($hF, $mF) = explode(":", $data["TimeFrom"]);
+                        list($hF, $mF) = explode(":", $data["scFTime"]);
                         if (strlen($hF) < 2) {
                             $hF = '0' . $hF;
                         }
@@ -323,16 +308,16 @@
 
                     // TimeTo
                     $timeTo = $sheet->getCell('E' . $row)->getFormattedValue();
-                    $data["TimeTo"] = preg_replace('/\s/', '', $timeTo);
-                    $data["TimeTo"] = preg_replace('/\：/', ':', $data['TimeTo']);
-                    if ( $checkEmpty( $data["TimeTo"] ) ) {
+                    $data["scTTime"] = preg_replace('/\s/', '', $timeTo);
+                    $data["scTTime"] = preg_replace('/\：/', ':', $data['scTTime']);
+                    if ( $checkEmpty( $data["scTTime"] ) ) {
                         $errMsg .= "終了時間は未入力です。";
                     }
-                    elseif ( !preg_match( '/^\d{1,2}\:\d{1,2}$/', $data['TimeTo'] ) ) {
+                    elseif ( !preg_match( '/^\d{1,2}\:\d{1,2}$/', $data['scTTime'] ) ) {
                         $errMsg .= "終了時間が有効ではない。";
                     }
                     else {
-                        list($hT, $mT) = explode(":", $data["TimeTo"]);
+                        list($hT, $mT) = explode(":", $data["scTTime"]);
                         if (strlen($hT) < 2) {
                             $hT = '0' . $hT;
                         }
@@ -342,44 +327,50 @@
                     }
 
                     if ( !empty( $hF ) && !empty( $ht ) ) {
-                        $ckTime = strtotime( $data['TimeFrom'] ) <=> strtotime( $data['TimeTo'] );
+                        $ckTime = strtotime( $data['scFTime'] ) <=> strtotime( $data['scTTime'] );
                         if ( $ckTime == 0 || $ckTime == 1 ) {
                             $errMsg .= "開始時間が有効ではない。";
                         }
                     }
 
                     // Description
-                    $data['Description'] = $sheet->getCell('F' . $row)->getFormattedValue();
-                    if ( strlen( $data['Description'] ) > 1000 ) {
+                    $data['scDescript'] = $sheet->getCell('F' . $row)->getFormattedValue();
+                    if ( strlen( $data['scDescript'] ) > 1000 ) {
                         $errMsg .= "備考を1000文字以内で入力してください。";
                     }
 
                     // IsActive
                     $strIsActive = $sheet->getCell('G' . $row)->getFormattedValue();
-                    $data['IsActive']    = ( !preg_match( '/^\s*$/', $strIsActive ) && strcmp( trim($strIsActive), 'あり') == 0 ) ? 1 : 0;
+                    $data['isActive']    = ( !preg_match( '/^\s*$/', $strIsActive ) && strcmp( trim($strIsActive), 'あり') == 0 ) ? 1 : 0;
 
                     // IsHighlight
                     $strIsHighlight = $sheet->getCell('H' . $row)->getFormattedValue();
-                    $data['IsHighlight'] = ( !preg_match( '/^\s*$/', $strIsActive ) && strcmp( trim($strIsHighlight), 'あり' ) == 0 ) ? 1 : 0;
+                    $data['isHighLight'] = ( !preg_match( '/^\s*$/', $strIsActive ) && strcmp( trim($strIsHighlight), 'あり' ) == 0 ) ? 1 : 0;
 
                     if ( $checkEmpty( $errMsg ) ) {
-                        if ( $this->dataExists($data) ) {
+                        $sqlCheck = "SELECT ScheduleId FROM {$this->table} WHERE MeetingPlaceId = " . intval( trim( $data['meetingPlaceId'] ) ) .
+                                " AND ShopId = " . intval( trim( $data['shopId'] ) ) .
+                                " AND `Date` = '" . date( 'Y-m-d', strtotime( trim( $data['scDate'] ) ) ) . "'" .
+                                " AND (TimeFrom = '" . trim( $data['scFTime'] ) . "'" .
+                                " AND TimeTo = '" . trim( $data['scTTime'] ) . "')";
+                        $stmt = $this->conn->prepare( $sqlCheck );
+                        $stmt->execute();
+                        if ( $stmt->rowCount() > 0 ) {
                             $errMsg .= "本スケジュールは既に存在しています。";
                         }
                         else {
-                            $query = "INSERT INTO {$this->table}(`ShopId`, `MeetingPlaceId`, `Date`, `TimeFrom`, `TimeTo`, `Description`, `IsActive`, `IsHighlight`)
-                                    VALUE ( :ShopId, :MeetingPlaceId, :Date, :TimeFrom, :TimeTo, :Description, :IsActive, :IsHighlight);";
-
-                            $Description = htmlspecialchars( strip_tags( $data['Description'] ) );
-                            $stmt = $this->conn->prepare($query);
-                            $stmt->bindParam(':ShopId', $data['ShopId'], PDO::PARAM_INT, 11);
-                            $stmt->bindParam(':MeetingPlaceId', $data['MeetingPlaceId'], PDO::PARAM_INT, 11);
-                            $stmt->bindParam(':Date', $data['Date'], PDO::PARAM_STR);
-                            $stmt->bindParam(':TimeFrom', $data['TimeFrom'], PDO::PARAM_STR, 5);
-                            $stmt->bindParam(':TimeTo', $data['TimeTo'], PDO::PARAM_STR, 5);
-                            $stmt->bindParam(':Description', $Description, PDO::PARAM_STR, 500);
-                            $stmt->bindParam(':IsActive', $data['IsActive'], PDO::PARAM_INT, 1);
-                            $stmt->bindParam(':IsHighlight', $data['IsHighlight'], PDO::PARAM_INT, 1);
+                            $query = "INSERT INTO {$this->table}( `ShopId`, `MeetingPlaceId`, `Date`, `TimeFrom`, `TimeTo`, `Description`, `IsActive`, `IsHighlight`)
+                                    VALUE (" . $data["shopId"] . "," .
+                                        $data["meetingPlaceId"] . "," .
+                                        "'" . $data["scDate"] . "'," .
+                                        "'" . $data['scFTime'] . "'," .
+                                        "'" . $data['scTTime'] . "'," .
+                                        "'" . htmlentities( strip_tags( $data['scDescript'] ) ) . "'," .
+                                        $data['isActive'] . "," .
+                                        $data['isHighLight'] .
+                                    ");";
+                            $result['query'] = $query;
+                            $stmt = $this->conn->prepare( $query );
                             $stmt->execute();
                             if ( $stmt->rowCount() > 0 ) {
                                 $countSuc++;
@@ -392,21 +383,21 @@
 
                     if ( !$checkEmpty( $errMsg ) ) {
                         $data['errMsg'] = $errMsg;
-                        $data['MeetingPlaceId'] = $mtCode;
-                        $data['ShopId'] = $shopCode;
-                        $data["TimeTo"] = $timeTo;
-                        $data["TimeFrom"] = $timeFrom;
-                        $errArg[$countErr] = $data;
-                        $countErr++;
-                    }
+                        $data['meetingPlaceId'] = $mtCode;
+                        $data['shopId'] = $shopCode;
+                        $data["scTTime"] = $timeTo;
+                        $data["scFTime"] = $timeFrom;
+          						$errArg[$countErr] = $data;
+          						$countErr++;
+          					}
                 }
             }
             catch(PDOException $e) {
-                $result['errMsg'] = "エラー " . $e->getMessage();
-            }
-            catch(Exception $e) {
-                $result['errMsg'] = "エラー " . $e->getMessage();
-            }
+      				$result['errMsg'] = "エラー " . $e->getMessage();
+      			}
+      			catch(Exception $e) {
+      				$result['errMsg'] = "エラー " . $e->getMessage();
+      			}
 
             if ( $countErr > 0 ) {
                 $result['errFile'] = $this->exportError( $errArg );
@@ -425,14 +416,14 @@
 
             $i = 2;
             foreach ( $data as $value ) {
-                $sheet->setCellValue( 'A' . $i, $value['MeetingPlaceId'] );
-                $sheet->setCellValue( 'B' . $i, $value['ShopId'] );
-                $sheet->setCellValue( 'C' . $i, $value['Date'] );
-                $sheet->setCellValue( 'D' . $i, $value['TimeFrom'] );
-                $sheet->setCellValue( 'E' . $i, $value['TimeTo'] );
-                $sheet->setCellValue( 'F' . $i, htmlspecialchars( $value['Description'] ) );
-                $sheet->setCellValue( 'G' . $i, $value['IsActive'] == 0 ? 'あり' : 'なし' );
-                $sheet->setCellValue( 'H' . $i, $value['IsHighlight'] == 0 ? 'あり' : 'なし' );
+                $sheet->setCellValue( 'A' . $i, $value['meetingPlaceId'] );
+                $sheet->setCellValue( 'B' . $i, $value['shopId'] );
+                $sheet->setCellValue( 'C' . $i, $value['scDate'] );
+                $sheet->setCellValue( 'D' . $i, $value['scFTime'] );
+                $sheet->setCellValue( 'E' . $i, $value['scTTime'] );
+                $sheet->setCellValue( 'F' . $i, htmlspecialchars( $value['scDescript'] ) );
+                $sheet->setCellValue( 'G' . $i, $value['isActive'] == 0 ? 'あり' : 'なし' );
+                $sheet->setCellValue( 'H' . $i, $value['isHighLight'] == 0 ? 'あり' : 'なし' );
                 $sheet->setCellValue( 'I' . $i, $value["errMsg"] );
                 $i++;
             }
@@ -445,9 +436,9 @@
 
         public function getListSpecialShop() {
             $query = "SELECT ShopId, Name FROM infodemo_shops WHERE IsSpecial = 1";
-            $stmt = $this->conn->prepare( $query );
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      			$stmt = $this->conn->prepare( $query );
+      			$stmt->execute();
+      			return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         public function getListNormalShop() {
@@ -455,68 +446,6 @@
       			$stmt = $this->conn->prepare( $query );
       			$stmt->execute();
       			return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        private function dataExists( Array $data, $flag = self::FLAG_ADD ) {
-             try {
-				extract($data);
-
-                $query = 'SELECT TimeFrom FROM ' . $this->table . ' WHERE MeetingPlaceId = :MeetingPlaceId' .
-                            ' AND ShopId = :ShopId' .
-                            ' AND `Date` = :Date AND %s' .
-                            ' ORDER BY TimeTo ASC LIMIT 1';
-
-                if ( $flag == self::FLAG_EDIT ) {
-                    $query1 = sprintf( $query, 'TimeTo >= :TimeFrom AND ScheduleId <> :ScheduleId' );
-                    $stmt = $this->conn->prepare( $query1 );
-                    $stmt->bindParam(':ScheduleId', $ScheduleId, PDO::PARAM_INT, 11);
-                }
-                else {
-                    $query1 = sprintf( $query, 'TimeTo >= :TimeFrom' );
-                    $stmt = $this->conn->prepare( $query1 );
-                }
-
-                $stmt->bindParam(':MeetingPlaceId', $MeetingPlaceId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':ShopId', $ShopId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Date', $Date, PDO::PARAM_STR);
-                $stmt->bindParam(':TimeFrom', $TimeFrom, PDO::PARAM_STR, 5);
-                $stmt->execute();
-
-                if ( $stmt->rowCount() > 0 ) {
-                    $rs = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if ( strtotime( $rs['TimeFrom'] ) <= strtotime( $TimeFrom ) ) {
-                        return true;
-                    }
-                }
-
-                if ( $flag == self::FLAG_EDIT ) {
-                    $query3 = sprintf( $query, 'TimeTo >= :TimeTo AND ScheduleId <> :ScheduleId' );
-                    $stmt = $this->conn->prepare( $query3 );
-                    $stmt->bindParam(':ScheduleId', $ScheduleId, PDO::PARAM_INT, 11);
-                }
-                else {
-                    $query3 = sprintf( $query, 'TimeTo >= :TimeTo' );
-                    $stmt = $this->conn->prepare( $query3 );
-                }
-
-                $stmt->bindParam(':MeetingPlaceId', $MeetingPlaceId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':ShopId', $ShopId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Date', $Date, PDO::PARAM_STR);
-                $stmt->bindParam(':TimeTo', $TimeTo, PDO::PARAM_STR, 5);
-                $stmt->execute();
-
-                if ( $stmt->rowCount() > 0 ) {
-                    $rs = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if ( strtotime( $rs['TimeFrom'] ) <= strtotime( $TimeTo ) ) {
-                        return true;
-                    }
-                }
-
-                return false;
-			}
-			catch ( PDOException $e ) {
-				return $e->getMessage();
-			}
         }
     }
 ?>

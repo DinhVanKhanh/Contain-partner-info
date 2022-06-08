@@ -80,7 +80,6 @@ $(document).ready(function() {
 			$('#submit_del').show();
 			$('.btnClose').show();
 		}, 500);
-		//loadMeetingPlacesList();
-		filterMeetingPlaceByArea();
+		loadMeetingPlacesList();
 	});
 });

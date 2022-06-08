@@ -14,57 +14,23 @@
             return $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
-    //↓↓　<2020/09/23> <YenNhi> <check record is exist>
-        private function dataExists(Array $data, $flag = self::FLAG_ADD) : bool {
-            extract($data);
-            $query = "SELECT AreaCode FROM {$this->table} WHERE (AreaCode= :AreaCode OR AreaName= :AreaName)";
-            if ($flag == self::FLAG_EDIT)
-            {
-                $query .= " AND AreaId <> :AreaId";
-                $areas = $this->conn->prepare($query);
-                $areas->bindParam(':AreaId', $id, PDO::PARAM_INT, 11);
-            } 
-            else 
-            {
-                $areas = $this->conn->prepare($query);
-            }
-            $areas->bindParam(':AreaCode', $code, PDO::PARAM_STR, 30);
-            $areas->bindParam(':AreaName', $name, PDO::PARAM_STR, 50);
-            $areas->execute();
-
-            return ($areas->rowCount() > 0)  ? true : false;
-        }
-    //↑↑　<2020/09/23> <YenNhi> <check record is exist>
-
         public function add( Array $data ) : array  {
             try {
-            //　↓↓　<2020/09/23> <YenNhi> <avoid SQL injection>
                 // Check record exists
-                // $areas = $this->conn->prepare( "SELECT AreaCode FROM {$this->table} WHERE AreaCode= :AreaCode OR AreaName= :AreaName" );
-                // $areas->bindParam(':AreaCode', $code, PDO::PARAM_STR, 30);
-                // $areas->bindParam(':AreaName', $name, PDO::PARAM_STR, 50);
-                // $areas->execute();
-
-                // Check record exists
-                if ( $this->dataExists($data) ) {
+                $areas = $this->conn->prepare( "SELECT AreaCode FROM {$this->table} WHERE AreaCode='" . $data["code"] . "' OR AreaName='" . $data["name"] . "'" );
+                $areas->execute();
+                if ( $areas->rowCount() > 0 ) {
                     $rs['errMsg'] = '重複する値';
                     goto Result;
                 }
-                extract($data);
-            //　↑↑　<2020/09/23> <YenNhi> <avoid SQL injection>
 
                 // Get max display no
                 $displayNo = $this->conn->prepare( "SELECT MAX(DisplayNo) as NO1 FROM {$this->table}" );
                 $displayNo->execute();
                 $displayNo = $displayNo->rowCount() > 0 ? $displayNo->fetch(PDO::FETCH_ASSOC)['NO1'] : 0;
 
-            //　↓↓　<2020/09/23> <YenNhi> <avoid SQL injection>
-                $area = $this->conn->prepare("INSERT INTO {$this->table}(AreaCode, AreaName, DisplayNo) VALUES (:AreaCode, :AreaName, :DisplayNo)");
-                $area->bindParam(':AreaCode', $code, PDO::PARAM_STR, 30);
-                $area->bindParam(':AreaName', $name, PDO::PARAM_STR, 50);
-                $area->bindParam(':DisplayNo', $displayNo, PDO::PARAM_INT, 11);
-                $area->execute();
-            //　↑↑　<2020/09/23> <YenNhi> <avoid SQL injection>
+                $query = "INSERT INTO {$this->table}(AreaCode, AreaName, DisplayNo) VALUES ('" . $data["code"] . "','" . $data["name"] . "', " . $displayNo . ")";
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
@@ -82,26 +48,17 @@
 
         public function edit( Array $data ) : array {
             try {
-            //↓↓　<2020/09/23> <YenNhi> < avoid SQL injection>
                 // Check record exists
-                // $areas = $this->conn->prepare( "SELECT AreaCode FROM {$this->table} WHERE (AreaCode= :AreaCode OR AreaName= :AreaName) AND AreaId <> :AreaId");
-                // $areas->bindParam(':AreaCode', $code, PDO::PARAM_STR, 30);
-                // $areas->bindParam(':AreaName', $name, PDO::PARAM_STR, 50);
-                // $areas->bindParam(':AreaId', $id, PDO::PARAM_INT, 11);
-                // $areas->execute();
-
-                // Check record exists
-                if ( $this->dataExists($data, self::FLAG_EDIT) ) {
+                $areas = $this->conn->prepare( "SELECT AreaCode FROM {$this->table} WHERE (AreaCode='" . $data["code"] . "' OR AreaName='" . $data["name"] . "') AND AreaId <> " . $data['id'] );
+                $areas->execute();
+                if ( $areas->rowCount() > 0 ) {
                     $rs['errMsg'] = '重複する値';
                     goto Result;
                 }
-                extract($data);
-                $query = $this->conn->prepare( "UPDATE {$this->table} SET AreaCode = :AreaCode, AreaName = :AreaName  where AreaId = :AreaId" );
-                $query->bindParam(':AreaCode', $code, PDO::PARAM_STR, 30);
-                $query->bindParam(':AreaName', $name, PDO::PARAM_STR, 50);
-                $query->bindParam(':AreaId', $id, PDO::PARAM_INT, 11);
-                $query->execute();                
-            //↑↑　<2020/09/23> <YenNhi> < avoid SQL injection>
+
+                $query = "UPDATE {$this->table} SET AreaCode='" . $data["code"] . "',
+                    AreaName='" . $data["name"] . "' where AreaId=" . $data['id'];
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
@@ -119,24 +76,19 @@
 
         public function delete( int $id ) : string {
             try {
-            //　↓↓　<2020/09/23> <YenNhi> <avoid SQL injection>
                 // Check in todouhukens
-                $todou = $this->conn->prepare( "SELECT TodouhukenCode FROM infodemo_todouhukens WHERE AreaId = :AreaId" );
-                $todou->bindParam(':AreaId', $id, PDO::PARAM_INT, 11);
-                $todou->execute();
-                if ( $todou->rowCount() > 0 ) {
+                $todo = $this->conn->prepare( "SELECT TodouhukenCode FROM infodemo_todouhukens WHERE AreaId = {$id}" );
+                $todo->execute();
+                if ( $todo->rowCount() > 0 ) {
                     $msgCheck1 = "都市管理";
                 }
 
                 // Check in banners
-                $banner = $this->conn->prepare( "SELECT BannerId FROM infodemo_banners WHERE ParentId = :ParentId" );
-                $banner->bindParam(':ParentId', $id, PDO::PARAM_INT, 11);
+                $banner = $this->conn->prepare( "SELECT BannerId FROM infodemo_banners WHERE ParentId = {$id}" );
                 $banner->execute();
                 if ( $banner->rowCount() > 0 ) {
                     $msgCheck2 = "バナー";
                 }
-            //　↑↑　<2020/09/23> <YenNhi> <avoid SQL injection>
-
 
                 if ( !empty($msgCheck1) && !empty($msgCheck2) ) {
                     throw new Exception( 'この会場は削除できません。 ' . $msgCheck1 . '、' . $msgCheck2 . "で地区います" );
@@ -148,13 +100,8 @@
                     throw new Exception( 'この会場は削除できません。 ' . $msgCheck2 . "で地区います" );
                 }
 
-            //　↓↓　<2020/09/23> <YenNhi> <avoid SQL injection>
-                $query = $this->conn->prepare( "DELETE FROM {$this->table} WHERE AreaId = :AreaId" );
-                $query->bindParam(':AreaId', $id, PDO::PARAM_INT, 11);
-                $query->execute();
-            //　↑↑　<2020/09/23> <YenNhi> <avoid SQL injection>
+                $this->conn->exec( "DELETE FROM {$this->table} WHERE AreaId = {$id}" );
                 return '削除しました';
-
             }
             catch (PDOException $e) {
                 return "削除失敗";
@@ -166,24 +113,19 @@
 
         // Change order row
         public function changeOrderRow( int $curId, int $upId, int $curIdx, int $upIdx ) : bool {
-           $query_curId = $this->conn->prepare("UPDATE {$this->table} SET DisplayNo = :DisplayNo WHERE areaId = :curId");
-           $query_curId->bindParam(':DisplayNo', $upIdx, PDO::PARAM_INT, 11);
-           $query_curId->bindParam(':curId', $curId, PDO::PARAM_INT, 11);
-           $query_curId->execute();
-
-           $query_upId = $this->conn->prepare("UPDATE {$this->table} SET DisplayNo = :DisplayNo WHERE areaId = :upId");
-           $query_upId->bindParam(':DisplayNo', $curIdx, PDO::PARAM_INT, 11);
-           $query_upId->bindParam(':upId', $upId, PDO::PARAM_INT, 11);
-           $query_upId->execute();
+            $this->conn->exec( "UPDATE {$this->table} SET DisplayNo = " . $upIdx . " WHERE areaId = " . $curId );
+            $this->conn->exec( "UPDATE {$this->table} SET DisplayNo = " . $curIdx . " where areaId = " . $upId );
             return true;
         }
 
         // Export data to csv
         public function exportCSV() : array {
-            $list = $this->getList();
+            $stmt = $this->conn->prepare( "SELECT AreaCode, AreaName FROM {$this->table} ORDER BY AreaId" );
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Check result statement
-            if ( !$list ) {
+            if ( !($result != false && count($result) > 0) ) {
                 $rs['empty'] = "空のデータ";
                 goto Result;
             }
@@ -203,12 +145,12 @@
 
             // Put content
             $content = "";
-            foreach ( $list as $item ) {
+            foreach ( $result as $data ) {
                 // Code
-                $code = $this->convertJP( $item["AreaCode"] );
+                $code = $this->convertJP( $data["AreaCode"] );
 
                 // Name
-                $name = $this->convertJP( $item["AreaName"] );
+                $name = $this->convertJP( $data["AreaName"] );
                 fputcsv( $file, [$code, $name] );
             }
 
@@ -219,3 +161,4 @@
             return $rs;
         }
     }
+?>

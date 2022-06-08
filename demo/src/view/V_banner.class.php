@@ -25,7 +25,7 @@
 
                 // Banner 1
                 $showdata .= '<td class="center areaIndex">';
-                if ( empty( $value["Banner1"] ) ) {
+                if ( preg_match( '/^(\s+|)$/', $value["Banner1"] ) ) {
                     $showdata .= '<strong>DUMMY</strong>';
                 }
                 else {
@@ -36,7 +36,7 @@
 
                 // Banner 2
                 $showdata .= '<td class="center areaIndex">';
-                if ( empty( $value["Banner2"] ) ) {
+                if ( preg_match( '/^(\s+|)$/', $value["Banner2"] ) ) {
                     $showdata .= '<strong>DUMMY</strong>';
                 }
                 else {
@@ -47,7 +47,7 @@
 
                 // Banner 3
                 $showdata .= '<td class="center areaIndex">';
-                if ( empty( $value["Banner3"] ) ) {
+                if ( preg_match( '/^(\s+|)$/', $value["Banner3"] ) ) {
                     $showdata .= '<strong>DUMMY</strong>';
                 }
                 else {

@@ -8,53 +8,40 @@
 	$scripts = "";
 
 	require_once __DIR__ . "/view/template/header/normal.php";
-
-	require_once __DIR__ . "/config/database.class.php";
 	use Redirect\Redirect as Redirect;
 
 	if ( isset( $_SESSION['userDM'] ) ) {
 		new Redirect( "schedule.php" );
 	}
 
-	$err      = '';
 	$chkLogin = true;
-	$UserCd   = trim( $_POST['txtUname'] ?? '' );
-	$Password = trim( $_POST['txtUpass'] ?? '' );
-
 	if ( $_SERVER["REQUEST_METHOD"] == "POST" ) {
-		if ( empty( $UserCd ) ) {
+		if ( empty( $_POST['txtUname'] ) ) {
 			$chkLogin = false;
 			$err = 'ユーザーIDは未入力です。';
 			goto Error;
 		}
 
-		if ( empty( $Password ) ) {
+		if ( empty( $_POST['txtUpass'] ) ) {
 			$chkLogin = false;
 			$err = 'パスワードは未入力です。';
 			goto Error;
 		}
-		echo 'ss';
 
-	$Conn = new Database;
-	$stmt = $Conn->conn->prepare("Select `UserId`, `UserCd`, `KengenKbn` from `infodemo_users` where `UserCd` = :UserCd and `Password` = MD5(:Password);");
-	$stmt->bindParam(':UserCd', $UserCd, PDO::PARAM_STR, 12);
-	$stmt->bindParam(':Password', $Password, PDO::PARAM_STR, 12);
-	$stmt->execute();
+		$u_code = $_POST['txtUname'];
+		$u_pass = $_POST['txtUpass'];
 
-	if ( $stmt->rowCount() < 1  ) {
-		$chkLogin = false;
-		$err = 'ログインできません。';
-		goto Error;
-	}
+		$Conn = new Database;
+		$isUser = $Conn->conn->prepare("Select `UserCd` from `infodemo_users` where `UserCd` = '" . $u_code . "' and `Password` = '" . md5( $u_pass ) . "'");
+		$isUser->execute();
+		if ( $isUser->rowCount() < 1  ) {
+			$chkLogin = false;
+			$err = 'ログインできません。';
+			goto Error;
+		}
 
-	$stmt = $stmt->fetch(PDO::FETCH_ASSOC);
-
-	$_SESSION['idDM']   = (int) $stmt['UserId'];
-	$_SESSION['userDM'] = $stmt['UserCd'];
-	$_SESSION['roleDM'] = (int) $stmt['KengenKbn'];
-
-	new Redirect( "schedule.php" );
-	// echo "<script>window.location.href = 'schedule.php'</script>"; die();
+		$_SESSION['userDM'] = $u_code;
+		new Redirect( "schedule.php" );
 	}
 ?>
 
@@ -63,7 +50,11 @@
     <h2 class="h2Title"><span>店頭デモ　管理者画面　ログイン</span></h2>
     <div class="login_text">
         <div id="message" class="center">
-            <?= !$chkLogin ? $err : '' ?>
+		<?php
+			if ( !$chkLogin ) {
+				echo $err;
+			}
+		?>
         </div>
 
         <form class="form-horizontal" method="post" role="form">
@@ -71,7 +62,7 @@
                 <label class="control-label  col-sm-3" for="username">ユーザーID</label>
                 <div class="col-sm-9">
                     <input type="text" class="form-control" name="txtUname" id="txtUname" size="20" maxlength="12"
-                        value="<?= $UserCd ?>">
+                        value="<?php if ( !empty( $_POST['txtUname'] ) ) { echo $_POST['txtUname']; }?>">
                 </div>
             </div>
 

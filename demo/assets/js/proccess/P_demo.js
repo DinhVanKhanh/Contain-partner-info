@@ -65,9 +65,9 @@ function searchSchedule( areaId, shopId, todouhukenId, scheduleDate, address ) {
         data: {
             controller: _controller,
             action: 'searchSchedule',
-            areaId: Number( areaId ),
-            shopId: Number( shopId ),
-            todouhukenId: Number( todouhukenId ),
+            areaId: areaId,
+            shopId: shopId,
+            todouhukenId: todouhukenId,
             date: scheduleDate,
             address: address
         },
@@ -161,9 +161,6 @@ function ChangeArea(id) {
 
 // Change Shop
 function ChangeShop(id) {
-    // Reload banner
-    getBanner(id, 1);
-
     // Init search condition
     $('#searchDate').val('');
     $('#searchAddress').val('');
@@ -176,12 +173,7 @@ function ChangeShop(id) {
     loadTodouhukenByShopId(id);
 
     // Load grid
-    flagLoaded = false;
     searchSchedule(null, id, null, null, null);
-    $('#hdShopId').val(id);
-    setTimeout(function () {
-        fixFooter();
-    }, 200);
 }
 
 // Init tab Area
@@ -214,6 +206,7 @@ function initAreaTab() {
 // Init tab Shop special
 function initShopTab() {
     $("#tabArea").addClass("left");
+    let shopId = Number( $('#hdShopId').val() );
     jQuery.ajax({
         type: 'POST',
         dataType: 'json',
@@ -221,16 +214,15 @@ function initShopTab() {
         data: {
             controller: _controller,
             action: 'getShopName',
+            shopId: shopId
         },
         success: function ( data ) {
-            data.forEach( function (item) {
-                let viewTab = ( item.ShopId == $('#hdShopId').val() ) ? '<li class="atv">' : '<li>';
-                viewTab += '<a id="lnk' + item.ShopId + '" onclick="ChangeShop(' + item.ShopId + ');" href="javascript:void(0);">' +
-                                item.Name +
-                            '</a>';
-                viewTab += '</li>';
-                $("#tabArea").append( viewTab );
-            });
+            let viewTab = '<li class="atv">';
+            viewTab += '<a id="lnk' + shopId + '" onclick="ChangeShop(' + shopId + ');" href="javascript:void(0);">' +
+                            data.Name +
+                        '</a>';
+            viewTab += '</li>';
+            $("#tabArea").append( viewTab );
         },
         error: function (xhr, textStatus, errorThrown) {
             $('#error_search').html('サーバーへの接続のエラーであります');

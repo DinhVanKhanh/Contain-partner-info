@@ -205,39 +205,36 @@ function openDialog(bannerId, isEdit) {
 						$('#parent_shop').val(data.ParentId);
 						break;
 				}
-				let partern = /^\s*$/;
+				let partern = /^(\s+|)$/;
 
 				// Banner 1
-				let banner1 = data.Banner1 == "NULL" ? '' : data.Banner1;
-				$('#inputImage1').val(banner1);
-				if (!partern.test(banner1)) {
+				$('#inputImage1').val(data.Banner1);
+				if (!partern.test(data.Banner1)) {
 					$('#btnDelBn1').show();
 				}
-				$('#img1').val(banner1);
+				$('#img1').val(data.Banner1);
 
 				if ( Number( data.IsShow1 ) == 0 ) {
 					$('#chkTop').prop("checked", true);
 				}
 
 				// Banner 2
-				let banner2 = data.Banner2 == "NULL" ? '' : data.Banner2;
-				$('#inputImage2').val(banner2);
-				if (!partern.test(banner2)) {
+				$('#inputImage2').val(data.Banner2);
+				if (!partern.test(data.Banner2)) {
 					$('#btnDelBn2').show();
 				}
-				$('#img2').val(banner2);
+				$('#img2').val(data.Banner2);
 
 				if ( Number( data.IsShow2 ) == 0 ) {
 					$('#chkLeft').prop("checked", true);
 				}
 
 				// Banner 3
-				let banner3 = data.Banner3 == "NULL" ? '' : data.Banner3;
-				$('#inputImage3').val(banner3);
-				if (!partern.test(banner3)) {
+				$('#inputImage3').val(data.Banner3);
+				if (!partern.test(data.Banner3)) {
 					$('#btnDelBn3').show();
 				}
-				$('#img3').val(banner3);
+				$('#img3').val(data.Banner3);
 
 				if ( Number( data.IsShow3 ) == 0 ) {
 					$('#chkRight').prop("checked", true);

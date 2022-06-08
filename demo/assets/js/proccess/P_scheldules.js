@@ -133,7 +133,7 @@ function addSchedule( formData ) {
             }
 
             $.fancybox.close();
-            filterScheduleByArea();
+            loadScheduleList();
         },
         error: function (xhr, textStatus, errorThrown) {
             $('.error_inline0').html('サーバーへの接続のエラーであります');
@@ -157,12 +157,13 @@ function editSchedule( formData ) {
 			$('.dialogLoading').show();
 		},
         success: function (data) {
+            $('.dialogLoading').hide();
             if ( typeof data.errMsg != "undefined" ) {
                 $('.error_inline0').html( data.errMsg );
                 return;
             }
             $.fancybox.close();
-            filterScheduleByArea();
+            loadScheduleList();
         },
         error: function (xhr, textStatus, errorThrown) {
             $('.error_inline0').html('サーバーへの接続のエラーであります');
@@ -228,11 +229,6 @@ function saveSchedule() {
         return;
     }
 
-    if ( $('#scDescript').val().length > 500 ) {
-        error( '#scDescript', '開催会場住所を500文字以内で入力してください。' );
-        return;
-    }
-
     let formData = new FormData();
     formData.append('controller', _controller);
     formData.append('shopId', Number( $('#shopId').val() ));
@@ -244,10 +240,6 @@ function saveSchedule() {
     formData.append('isActive', $('#scIsActive').is(':checked') ? 1 : 0);
     formData.append('isHighLight', $('#scIsHighLight').is(':checked') ? 1 : 0);
     formData.append('oldPdf', $('#oldPdf').val());
-
-    // console.log(formData.entries());
-
-
     if ( typeof $('#ipPdf')[0].files[0] != "undefined" ) {
         formData.append('file', $('#ipPdf')[0].files[0]);
         formData.append('curPdf', $('#ipPdf')[0].files[0].name);
@@ -262,6 +254,7 @@ function saveSchedule() {
         formData.append('action', 'add');
         addSchedule(formData);
     }
+    resetDataDialog();
 }
 
 // Open schedule dialog

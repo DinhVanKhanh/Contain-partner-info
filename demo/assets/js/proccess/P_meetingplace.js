@@ -46,8 +46,7 @@ function addMeetingPlace(formData) {
 			}
 
 			$.fancybox.close();
-			//loadMeetingPlacesList()
-			filterMeetingPlaceByArea()
+			loadMeetingPlacesList()
 		},
 		error: function (xhr, textStatus, errorThrown) {
 			$('.error_inline0').html('サーバーへの接続のエラーであります');
@@ -77,8 +76,7 @@ function editMeetingPlaces(formData) {
 			}
 
 			$.fancybox.close();
-			//loadMeetingPlacesList()
-			filterMeetingPlaceByArea()
+			loadMeetingPlacesList()
 		},
 		error: function (xhr, textStatus, errorThrown) {
 			$('.error_inline0').html('サーバーへの接続のエラーであります');
@@ -93,11 +91,6 @@ function editMeetingPlaces(formData) {
 function saveMeetingPlaces() {
 	$('.error_inline0').html('');
 	let partern = /^(\s+|)$/;
-	let tel = $('#txtMtTel').val();
-	tel = tel.replace(/\-+/g, '');
-
-	let fax = $('#txtMtFax').val();
-	fax = fax.replace(/\-+/g, '');
 
 	if ( partern.test( $('#txtMtCode').val() ) ) {
 		$('.error_inline0').html('会場コードは未入力です。');
@@ -129,14 +122,14 @@ function saveMeetingPlaces() {
 		$('#txtMtAddress1').focus();
 		return;
 	}
-	else if ( !partern.test( tel )
-	&& ( tel.length < 10 || tel.length > 11 ) ) {
+	else if ( !partern.test( $('#txtMtTel').val() )
+	&& !(/\d{2,3}-\d{3,4}-\d{4,5}/.test( $('#txtMtTel').val() ) ) ) {
 		$('.error_inline0').html('電話のフォーマットが無効です');
 		$('#txtMtTel').focus();
 		return;
 	}
-	else if ( !partern.test( fax )
-	&& ( fax.length < 10 || fax.length > 11 ) ) {
+	else if ( !partern.test( $('#txtMtFax').val() )
+	&& !(/\d{3}-\d{3}-\d{4}/.test( $('#txtMtFax').val() ) ) ) {
 		$('.error_inline0').html('Faxのフォーマットが無効です');
 		$('#txtMtFax').focus();
 		return;

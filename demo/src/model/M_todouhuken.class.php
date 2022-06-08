@@ -17,51 +17,19 @@
 			$stmt->execute();
 			return $stmt->fetch(PDO::FETCH_ASSOC);
 		}
-	//　↓↓　<2020/09/23> <YenNhi> <check record is exist>
-        private function dataExists(Array $data, $flag = self::FLAG_ADD) : bool {
-            extract($data);
-            $query = "SELECT TodouhukenCode FROM {$this->table} WHERE (TodouhukenCode= :TodouhukenCode OR TodouhukenName= :TodouhukenName)";
-            if ( $flag == self::FLAG_EDIT )
-			{
-				$query .= " AND TodouhukenId <> :TodouhukenId";
-				$todous = $this->conn->prepare($query);
-				$todous->bindParam(':TodouhukenId', $id, PDO::PARAM_INT, 11);
-			}
-			else 
-			{
-				$todous = $this->conn->prepare($query);
-			}
-                 
-			$todous->bindParam(':TodouhukenCode', $code, PDO::PARAM_STR, 30);
-			$todous->bindParam(':TodouhukenName', $name, PDO::PARAM_STR, 50);
-			$todous->execute();
-			return ($todous->rowCount() > 0)  ? true : false;
-        }
-	//　↑↑　<2020/09/23> <YenNhi> <check record is exist>
-		
+
 		public function add( Array $data ) : array  {
 			try {
-			//　↓↓　<2020/09/24> <YenNhi> <avoid SQL injection>
 				// Check record exists
-				// $todous = $this->conn->prepare( "SELECT TodouhukenCode FROM {$this->table} WHERE TodouhukenCode='" . $data['code'] . "' OR TodouhukenName='" . $data['name'] . "'" );
-				// $todous->execute();
-				
-				//$query = "INSERT INTO {$this->table}(TodouhukenCode, TodouhukenName, AreaId)
-				//		VALUES ('" . $data["code"] . "','" . $data["name"] . "'," . $data["areaId"] . ")";
-				//$this->conn->exec( $query );
-
-				// Check record exists
-				if ( $this->dataExists($data) ) {
+				$todous = $this->conn->prepare( "SELECT TodouhukenCode FROM {$this->table} WHERE TodouhukenCode='" . $data['code'] . "' OR TodouhukenName='" . $data['name'] . "'" );
+				$todous->execute();
+				if ( $todous->rowCount() > 0 ) {
 					throw new Exception( '重複する値' );
 				}
-				extract($data);
-				$query = "INSERT INTO {$this->table}(TodouhukenCode, TodouhukenName, AreaId) VALUES (:TodouhukenCode, :TodouhukenName, :AreaId)";
-				$todous = $this->conn->prepare($query);
-				$todous->bindParam(':TodouhukenCode', $code, PDO::PARAM_STR, 30);
-				$todous->bindParam(':TodouhukenName', $name, PDO::PARAM_STR, 50);
-				$todous->bindParam(':AreaId', $areaId, PDO::PARAM_INT, 11);
-				$todous->execute();
-			//　↑↑　<2020/09/24> <YenNhi> <avoid SQL injection>
+
+				$query = "INSERT INTO {$this->table}(TodouhukenCode, TodouhukenName, AreaId)
+						VALUES ('" . $data["code"] . "','" . $data["name"] . "'," . $data["areaId"] . ")";
+				$this->conn->exec( $query );
 				$rs['success'] = true;
 			}
 			catch (PDOException $e) {
@@ -79,32 +47,17 @@
 
 		public function edit( Array $data ) : array {
 			try {
-			//　↓↓　<2020/09/24> <YenNhi> <avoid SQL injection>
 				// Check record exists
-				// $todous = $this->conn->prepare( "SELECT TodouhukenCode FROM {$this->table} WHERE (TodouhukenCode='" . $data['code'] . "' OR TodouhukenName='" . $data['name'] . "') AND TodouhukenId <> " . $data['id'] );
-				// $todous->execute();
-				// $query = "UPDATE {$this->table} SET TodouhukenCode='" . $data["code"] . "',
-				// 	TodouhukenName='" . $data["name"] . "', AreaId=" . $data["areaId"] . "\n
-				// 	WHERE TodouhukenId=" . $data['id'];
-				// $this->conn->exec( $query );
-
-				// Check record exists
-				if ( $this->dataExists($data, self::FLAG_EDIT) ) {
+				$todous = $this->conn->prepare( "SELECT TodouhukenCode FROM {$this->table} WHERE (TodouhukenCode='" . $data['code'] . "' OR TodouhukenName='" . $data['name'] . "') AND TodouhukenId <> " . $data['id'] );
+				$todous->execute();
+				if ( $todous->rowCount() > 0 ) {
 					throw new Exception( '重複する値' );
 				}
-				extract($data);
-				$query ="UPDATE {$this->table} 
-						SET TodouhukenCode= :TodouhukenCode, 
-							TodouhukenName= :TodouhukenName, 
-							AreaId= :AreaId 
-						WHERE TodouhukenId= :TodouhukenId";
-				$todous = $this->conn->prepare($query);
-				$todous->bindParam(':TodouhukenCode', $code, PDO::PARAM_STR, 30);
-				$todous->bindParam(':TodouhukenName', $name, PDO::PARAM_STR, 50);
-				$todous->bindParam(':AreaId', $areaId, PDO::PARAM_INT, 11);
-				$todous->bindParam(':TodouhukenId', $id, PDO::PARAM_INT, 11);
-				$todous->execute();
-			//　↑↑　<2020/09/24> <YenNhi> <avoid SQL injection>
+
+				$query = "UPDATE {$this->table} SET TodouhukenCode='" . $data["code"] . "',
+					TodouhukenName='" . $data["name"] . "', AreaId=" . $data["areaId"] . "\n
+					WHERE TodouhukenId=" . $data['id'];
+				$this->conn->exec( $query );
 				$rs['success'] = true;
 			}
 			catch (PDOException $e) {
@@ -141,10 +94,16 @@
 
 		// Export data to csv
 		public function exportCSV() : array {
-			$list = $this->getList();
+			$query = "SELECT todo.TodouhukenCode, todo.TodouhukenName, ar.AreaName\n
+					FROM {$this->table} todo, infodemo_areas ar\n
+					WHERE ar.AreaId = todo.AreaId\n
+					ORDER BY TodouhukenId";
+			$stmt = $this->conn->prepare( $query );
+			$stmt->execute();
+			$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 			// Check result statement
-			if ( !$list ) {
+			if ( !($result != false && count($result) > 0) ) {
 				$rs['empty'] = "空のデータ";
 				goto Result;
 			}
@@ -165,15 +124,15 @@
 
 			// Put content
 			$content = "";
-			foreach ($list as $item) {
+			foreach ($result as $data) {
 				// Name
-				$name = $this->convertJP($item["AreaName"]);
+				$name = $this->convertJP($data["AreaName"]);
 
 				// TodouhukenCode
-				$todouhukenCode = $this->convertJP($item["TodouhukenCode"]);
+				$todouhukenCode = $this->convertJP($data["TodouhukenCode"]);
 
 				// TodouhukenName
-				$todouhukenName = $this->convertJP($item["TodouhukenName"]);
+				$todouhukenName = $this->convertJP($data["TodouhukenName"]);
 				fputcsv( $file, [$name, $todouhukenCode, $todouhukenName] );
 			}
 
@@ -186,11 +145,11 @@
 
 		// Fitler record by area
 		public function filterByArea( int $id ) {
-			$query ="SELECT todo.TodouhukenId, todo.TodouhukenCode, todo.TodouhukenName, ar.AreaName 
-					FROM infodemo_todouhukens todo, infodemo_areas ar 
-					WHERE ar.AreaId = todo.AreaId AND todo.AreaId= :id ORDER BY TodouhukenId";
-			$stmt = $this->conn->prepare($query);
-			$stmt->bindParam(':id', $id);
+			$query = "SELECT todo.TodouhukenId, todo.TodouhukenCode, todo.TodouhukenName, ar.AreaName\n
+					FROM infodemo_todouhukens todo, infodemo_areas ar\n
+					WHERE ar.AreaId = todo.AreaId AND todo.AreaId=" . $id . "\n
+					ORDER BY TodouhukenId";
+			$stmt = $this->conn->prepare( $query );
 			$stmt->execute();
 			return $stmt->fetchAll(PDO::FETCH_ASSOC);
 		}

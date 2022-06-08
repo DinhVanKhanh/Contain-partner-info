@@ -1,6 +1,5 @@
 $(document).ready(function() {
 	$('#mnLogin').css('color', '#cc3300');
-	showList();
 
 	$(".num_alphabet").on("keydown", function(event) {
 		// Ignore controls such as backspace
@@ -28,6 +27,9 @@ $(document).ready(function() {
 		}
 	});
 
+	//load list user
+	loadUserList();
+
 	$('#submit_del').click(function() {
 		deleteUser();
 	});
@@ -40,7 +42,7 @@ $(document).ready(function() {
 			$('#submit_del').show();
 			$('.btnClose').show();
 		}, 500);
-		showList();
+		loadUserList();
 	});
 
 	$("#username").keydown(function(e) {
@@ -63,25 +65,4 @@ $(document).ready(function() {
 			$('#username').val() == '';
 		}
 	});
-
-	$('#cPass1').click(function () {
-		$(this).hide();
-		$('#cPass2').parent().show();
-		$('#change').val(1);
-	});
-
-	$('#cPass2').click(function () {
-		$(this).parent().hide();
-		$('#cPass1').show();
-		$('#change').val(0);
-	});
-
-	function showList() {
-		if ( $('#confirmBox').length ) {
-			loadUserList();
-		}
-		else {
-			loadUserPersonal();
-		}
-	}
 });

@@ -17,7 +17,6 @@ $(document).ready(function() {
 			$('#submit_del').show();
 			$('.btnClose').show();
 		}, 500);
-		//loadTodouhukenList();
-		filterTodouhukenByArea();
+		loadTodouhukenList();
 	});
 });

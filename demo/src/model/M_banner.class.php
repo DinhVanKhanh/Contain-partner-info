@@ -16,20 +16,15 @@
         }
 
         public function getById( int $id ) : array {
-            $stmt = $this->conn->prepare( "SELECT IsShop, ParentId, Banner1, IsShow1, Banner2, IsShow2, Banner3, IsShow3, `Description`FROM {$this->table} WHERE BannerId = {$id}"  );
+            $stmt = $this->conn->prepare( "SELECT * FROM {$this->table} WHERE BannerId = {$id}"  );
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         public function add( Array $data ) : array  {
             try {
-                if ( $this->dataExists( $data ) ) {
-                    throw new Exception( "このバナーが登録されていました。" );
-                }
-
                 $upload = __DIR__ . '/../../../data_files/';
                 $arrImg = ['png','jpeg','jpg','gif'];
-
                 // Banner1, Banner2, Banner3
                 for ( $i = 1; $i <= 3; $i++ ) {
                     if ( $data['Banner' . $i] != null ) {
@@ -37,48 +32,34 @@
                             throw new Exception( "可能の容量を超えります" );
                         }
 
-                    //<2020/08/03>↓↓<KhanhDinh>
-                        //　↓↓　＜2020/09/24＞　＜VinhDao＞　＜修正＞
-                            // $file_ext = strtolower(explode(".",$data['Banner' . $i]['name'])[1]);
-                            $file_ext = mb_strrpos( $data['Banner' . $i]['name'], '.' ) + 1;
-                            $file_ext = strtolower( mb_substr($data['Banner' . $i]['name'], $file_ext) );
-                        //　↑↑　＜2020/09/24＞　＜VinhDao＞　＜修正＞
+                        //<2020/08/03>↓↓<KhanhDinh>
+                        $file_ext= strtolower(explode(".",$data['Banner' . $i]['name'])[1]);
                         
-                        if (!in_array($file_ext, $arrImg)) {
-                            throw new Exception("画像ではありません");
-                        }
-                    //<2020/08/03>↑↑ <KhanhDinh>
-
+                        if(!in_array($file_ext, $arrImg))
+                            throw new Exception( "画像ではありません" );
+                        //<2020/08/03>↑↑ <KhanhDinh>
+                         $rs['aa'] = $file_ext;
                         if ( file_exists( $upload . $this->_prefix . $data['Banner' . $i]["name"] ) ) {
                             unlink( $upload . $this->_prefix . $data['Banner' . $i]["name"] );
                         }
 
                         $name['Banner' . $i] = $data['Banner' . $i]["name"];
-                        if ( !move_uploaded_file( $data['Banner' . $i]["tmp_name"], $upload . $this->_prefix . $name['Banner' . $i] ) ) {
-                            throw new Exception('ファイルのアップロード時にエラーが発生しました');
-                        }
+                        move_uploaded_file( $data['Banner' . $i]["tmp_name"], $upload . $this->_prefix . $name['Banner' . $i] );
                     }
                 }
 
-                extract($data);
                 $query = "INSERT INTO {$this->table} (`Banner1`, `IsShow1`, `Banner2`, `IsShow2`, `Banner3`, `IsShow3`, `Description`, `IsShop`, `ParentId`)" .
-                        "VALUES (:Banner1, :IsShow1, :Banner2, :IsShow2, :Banner3, :IsShow3, :Description, :IsShop, :ParentId)";
-
-                $Banner1 = $name['Banner1'] ?? null;
-                $Banner2 = $name['Banner2'] ?? null;
-                $Banner3 = $name['Banner3'] ?? null;
-
-                $stmt = $this->conn->prepare( $query );
-                $stmt->bindParam(':ParentId', $ParentId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':IsShop', $IsShop, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':Banner1', $Banner1, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow1', $IsShow1, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Banner2', $Banner2, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow2', $IsShow2, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Banner3', $Banner3, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow3', $IsShow3, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Description', $Description, PDO::PARAM_STR, 500);
-                $stmt->execute();
+                        "VALUES (" .
+                        ( !empty($name['Banner1']) ? "'" . $name['Banner1'] . "'" : 'NULL') . ',' .
+                        $data["IsShow1"] . "," .
+                        ( !empty($name['Banner2']) ? "'" . $name['Banner2'] . "'" : 'NULL') . ',' .
+                        $data["IsShow2"] . "," .
+                        ( !empty($name['Banner3']) ? "'" . $name['Banner3'] . "'" : 'NULL') . ',' .
+                        $data["IsShow3"] . "," .
+                        "'" . $data["Description"] . "'," .
+                        $data["IsShop"] . "," .
+                        $data["ParentId"] . ")";
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
@@ -96,13 +77,8 @@
 
         public function edit( Array $data ) : array {
             try {
-                if ( $this->dataExists( $data, self::FLAG_EDIT ) ) {
-                    throw new Exception( "このバナーが登録されていました。" );
-                }
-
                 $upload = __DIR__ . '/../../../data_files/';
                 $arrImg = ['png','jpeg','jpg','gif'];
-
                 // Banner1, Banner2, Banner3
                 for ( $i = 1; $i <= 3; $i++ ) {
                     if ( $data['Banner' . $i] != null ) {
@@ -110,17 +86,12 @@
                             throw new Exception( "可能の容量を超えります" );
                         }
 
-                    //<2020/08/03>↓↓<KhanhDinh>
-                        //　↓↓　＜2020/09/24＞　＜VinhDao＞　＜修正＞
-                            // $file_ext = strtolower(explode(".",$data['Banner' . $i]['name'])[1]);
-                            $file_ext = mb_strrpos( $data['Banner' . $i]['name'], '.' ) + 1;
-                            $file_ext = strtolower( mb_substr($data['Banner' . $i]['name'], $file_ext) );
-                        //　↑↑　＜2020/09/24＞　＜VinhDao＞　＜修正＞
+                        //<2020/08/03>↓↓<KhanhDinh>
+                        $file_ext= strtolower(explode(".",$data['Banner' . $i]['name'])[1]);
                         
-                        if  ( !in_array($file_ext, $arrImg) ) {
-                            throw new Exception("画像ではありません");
-                        }
-                    //<2020/08/03>↑↑ <KhanhDinh>
+                        if(!in_array($file_ext, $arrImg))
+                            throw new Exception( "画像ではありません" );
+                        //<2020/08/03>↑↑ <KhanhDinh>
 
                         if ( file_exists( $upload . $this->_prefix . $data['Banner' . $i]["name"] ) ) {
                             unlink( $upload . $this->_prefix . $data['Banner' . $i]["name"] );
@@ -132,44 +103,25 @@
                         }
 
                         $name['Banner' . $i] = $data['Banner' . $i]["name"];
-                        if ( !move_uploaded_file( $data['Banner' . $i]["tmp_name"], $upload . $this->_prefix . $name['Banner' . $i] ) ) {
-                            throw new Exception('ファイルのアップロード時にエラーが発生しました');
-                        }
+                        move_uploaded_file( $data['Banner' . $i]["tmp_name"], $upload . $this->_prefix . $name['Banner' . $i] );
                     }
                     else {
-                        $name['Banner' . $i] = !empty( $data['oldBanner' . $i] ) ? $data['oldBanner' . $i] : null;
+                        $name['Banner' . $i] = !empty( $data['oldBanner' . $i] ) ? $data['oldBanner' . $i] : 'NULL';
                     }
                 }
 
                 // SQL Update
                 $query = "UPDATE {$this->table} SET " .
-                            "`Banner1` = :Banner1," .
-                            "`IsShow1` = :IsShow1," .
-                            "`Banner2` = :Banner2," .
-                            "`IsShow2` = :IsShow2," .
-                            "`Banner3` = :Banner3," .
-                            "`IsShow3` = :IsShow3," .
-                            "`Description` = :Description," .
-                            "`IsShop` = :IsShop," .
-                            "`ParentId` = :ParentId WHERE `BannerId` = :BannerId";
-
-                extract($data);
-                $Banner1 = $name['Banner1'] ?? null;
-                $Banner2 = $name['Banner2'] ?? null;
-                $Banner3 = $name['Banner3'] ?? null;
-
-                $stmt = $this->conn->prepare( $query );
-                $stmt->bindParam(':BannerId', $BannerId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':ParentId', $ParentId, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':IsShop', $IsShop, PDO::PARAM_INT, 1);
-                $stmt->bindParam(':Banner1', $Banner1, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow1', $IsShow1, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Banner2', $Banner2, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow2', $IsShow2, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Banner3', $Banner3, PDO::PARAM_STR | PDO::PARAM_NULL, 500);
-                $stmt->bindParam(':IsShow3', $IsShow3, PDO::PARAM_INT, 11);
-                $stmt->bindParam(':Description', $Description, PDO::PARAM_STR, 500);
-                $stmt->execute();
+                        "`Banner1`=" . ( $name['Banner1'] == 'NULL' ? 'NULL' : "'" . $name['Banner1'] . "'" ) . "," .
+                        "`IsShow1`=" . $data["IsShow1"] . "," .
+                        "`Banner2`=" . ( $name['Banner2'] == 'NULL' ? 'NULL' : "'" . $name['Banner2'] . "'" ) . "," .
+                        "`IsShow2`=" . $data["IsShow2"] . "," .
+                        "`Banner3`=" . ( $name['Banner3'] == 'NULL' ? 'NULL' : "'" . $name['Banner3'] . "'" ) . "," .
+                        "`IsShow3`=" . $data["IsShow3"] . "," .
+                        "`Description`='" . $data["Description"] . "'," .
+                        "`IsShop`=" . $data["IsShop"] . "," .
+                        "`ParentId`=" . $data["ParentId"] . " WHERE `BannerId`=" . $data["id"];
+                $this->conn->exec( $query );
                 $rs['success'] = true;
             }
             catch (PDOException $e) {
@@ -228,8 +180,19 @@
 
         // Export data to csv
         public function exportCSV() : array {
-            $list = $this->getList();
-            if ( !$list ) {
+            $query = "SELECT bn.*, sh.Name AS name\n
+                FROM {$this->table} bn, infodemo_shops sh\n
+                WHERE sh.IsSpecial= 1 AND sh.ShopId = bn.ParentId AND bn.IsShop = 1\n
+                UNION\n
+                SELECT bn.*, ar.AreaName AS name\n
+                FROM {$this->table} bn, infodemo_areas ar\n
+                WHERE ar.AreaId = bn.ParentId AND bn.IsShop <> 1";
+            $stmt = $this->conn->prepare( $query );
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Check result statement
+            if ( !($result != false && count($result) > 0) ) {
                 $rs['empty'] = "空のデータ";
                 goto Result;
             }
@@ -252,22 +215,22 @@
 
             // Put content
             $content = "";
-            foreach ( $list as $item ) {
+            foreach ( $result as $data ) {
                 // Name
-                $name = $item["name"] . ( intval( $item["IsShop"] ) == 1 ? "店" : "区" );
+                $name = $data["name"] . ( intval( $data["IsShop"] ) == 1 ? "店" : "区" );
                 $name = $this->convertJP( $name );
 
                 // Banner1
-                $banner1 = $item["Banner1"];
+                $banner1 = $data["Banner1"];
 
                 // Banner2ss
-                $banner2 = $item["Banner2"];
+                $banner2 = $data["Banner2"];
 
                 // Banner3
-                $banner3 = $item["Banner3"];
+                $banner3 = $data["Banner3"];
 
                 // Description
-                $description = $this->convertJP( $item["Description"] );
+                $description = $this->convertJP( $data["Description"] );
                 fputcsv( $file, [$name, $banner1, $banner2, $banner3, $description] );
             }
 
@@ -276,29 +239,6 @@
 
             Result:
             return $rs;
-        }
-
-        function dataExists( Array $data, $flag = self::FLAG_ADD ) : bool {
-            try {
-				extract($data);
-				$query = "SELECT BannerId FROM {$this->table} WHERE ParentId = :ParentId AND IsShop = :IsShop";
-				if ( $flag == self::FLAG_EDIT ) {
-					$query .= " AND BannerId <> :BannerId;";
-					$stmt = $this->conn->prepare( $query );
-					$stmt->bindParam(':BannerId', $BannerId, PDO::PARAM_INT, 11);
-				}
-				else {
-					$stmt = $this->conn->prepare( $query );
-				}
-
-				$stmt->bindParam(':ParentId', $ParentId, PDO::PARAM_INT, 11);
-				$stmt->bindParam(':IsShop', $IsShop, PDO::PARAM_INT, 1);
-				$stmt->execute();
-				return $stmt->rowCount() > 0 ? true : false;
-			}
-			catch ( PDOException $e ) {
-				return $e->getMessage();
-			}
         }
     }
 ?>

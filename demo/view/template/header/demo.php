@@ -47,6 +47,15 @@
             });
         });
     </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-2097811-12"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-2097811-12');
+    </script>
 </head>
 
 <body>
@@ -55,7 +64,7 @@
             <div class="inner">
                 <h1 id="hLogo">
                     <a href="<?= $SORIMACHI_HOME ?>">
-                        <img src="assets/images/logo.gif" width="180" height="53" alt=""/>
+                        <img src="assets/images/logo.png" width="180" height="46" alt=""/>
                     </a>
                 </h1>
                 <h2 class="hTitle">店頭デモンストレーション</h2>

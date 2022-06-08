@@ -1,6 +1,6 @@
 <?php
     class M_demo extends Database {
-        public function getResultScheduleFromSeach( int $areaId, int $shopId, int $todokukenId, $scheduleDate, $address ) : array {
+        public function getResultScheduleFromSeach( $areaId, $shopId, $todokukenId, $scheduleDate, $address ) : array {
             $query = "SELECT sch.Date as 'ScheduleDate', sch.TimeFrom, sch.TimeTo, t.TodouhukenName,
                             t.TodouhukenId, sh.Name as 'ShopName', m.storeName1, m.storeName2,
                             m.Address_1, m.Address_2, sch.Description, sch.Pdf, m.Map, m.Tel, sch.IsActive, sch.IsHighlight \n
@@ -11,6 +11,7 @@
                     ORDER BY sch.Date ASC";
 
             // 地区ID、または、販売店IDで探す
+            $keyId = 0;
             $where = !empty( $areaId ) ? "t.AreaId = " . $areaId : "sh.ShopId = " . $shopId;
 
             // 都市で探す
@@ -81,11 +82,11 @@
 			return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        public function getShopName() {
-            $query = "SELECT `ShopId`, `Code`, `Name` FROM infodemo_shops WHERE IsSpecial = 1";
+        public function getShopName( int $shopId ) {
+            $query = "SELECT `Name` FROM infodemo_shops WHERE ShopId = " . $shopId;
 			$stmt = $this->conn->prepare( $query );
 			$stmt->execute();
-			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+			return $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         public function getListSpecialShop() {

@@ -49,8 +49,7 @@ function addTodoukuhen( code, name, areaId ) {
 			}
 
 			$.fancybox.close();
-			//loadTodouhukenList();
-			filterTodouhukenByArea();
+			loadTodouhukenList();
 		},
 		error: function (xhr, textStatus, errorThrown) {
 			$('.error_inline0').html('サーバーへの接続のエラーであります。');
@@ -86,8 +85,7 @@ function editTodouhuken( code, name, areaId, id ) {
 			}
 
 			$.fancybox.close();
-			//loadTodouhukenList();
-			filterTodouhukenByArea();
+			loadTodouhukenList();
 		},
 		error: function (xhr, textStatus, errorThrown) {
 			$('.error_inline0').html('サーバーへの接続のエラーであります。');
